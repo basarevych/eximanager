@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+
+'use strict'
+
+var argv            = require('minimist')(process.argv.slice(2)),
+    ServiceLocator  = require('../src/service-locator.js'),
+    Console         = require('../src/console.js'),
+    FileManager     = require('../src/file-manager.js'),
+    Init            = require('../src/init.js');
+
+var sl = new ServiceLocator(),
+    cons = new Console(sl),
+    manager = new FileManager(sl),
+    init = new Init(sl);
+
+if (argv['_'].length == 0)
+    showUsage();
+
+if (argv['_'].length && argv['_'][0] != 'init' && !sl.has('config')) {
+    var rl = cons.getReadline();
+
+    rl.write("\nError:\t\tEximanager is not initialized\n");
+    rl.write("\t\tPlease run 'eximanager init' before using\n\n");
+    rl.close();
+
+    process.exit(2);
+}
+
+switch (argv['_'][0]) {
+    case 'init':
+        var dir = argv['d'] ? argv['d'] : argv['dir'];
+        if (!dir)
+            showUsage('init');
+
+        init.createConfig(dir);
+        break;
+
+    default:
+        var rl = cons.getReadline();
+        rl.write("\nError: \t\tUnkown command: " + argv['_'][0] + "\n\n");
+        rl.close();
+        process.exit(1);
+}
+
+function showUsage(command) {
+    var rl = cons.getReadline();
+
+    rl.write("\n");
+    switch (command) {
+        case 'init':
+            rl.write("Usage:\t\teximanager init -d|--dir <configuration-directory>\n\n");
+            rl.write("\t\t<configuration-directory> is either /etc or /usr/local/etc\n");
+            break;
+
+        default:
+            rl.write("Usage:\t\teximanager <command> [options]\n");
+            rl.write("\nCommands:\n");
+            rl.write("\t\tinit\t\tInitialize Eximanager\n");
+    }
+
+    rl.write("\n");
+    rl.close();
+
+    process.exit(1);
+}

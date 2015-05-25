@@ -1,0 +1,4 @@
+module.exports = {
+    config_dir: "/etc/mail/virtual",        // Configuration directory
+    data_dir:   "/home/mail",               // Mail directory
+};

@@ -1,0 +1,29 @@
+{
+  "name": "eximanager",
+  "version": "0.0.1",
+  "description": "Virtual domains/users manager for Exim",
+  "main": "src",
+  "scripts": {
+    "test": "./node_modules/.bin/jasmine-node test"
+  },
+  "bin": {
+    "eximanager": "bin/eximanager"
+  },
+  "keywords": [
+    "exim"
+  ],
+  "author": "Ross Basarevych",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https:/github.com/basarevych/eximanager.git"
+  },
+  "dependencies": {
+    "minimist": "^1.1.1",
+    "q": "^1.4.1",
+    "tracer": "^0.7.4"
+  },
+  "devDependencies": {
+    "jasmine-node": "^1.14.5"
+  }
+}
