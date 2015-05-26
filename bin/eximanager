@@ -27,6 +27,10 @@ if (argv['_'].length && argv['_'][0] != 'init' && !sl.has('config')) {
 }
 
 switch (argv['_'][0]) {
+    case 'help':
+        showUsage(argv['_'].length > 1 ? argv['_'][1] : 'help');
+        break;
+
     case 'init':
         var dir = argv['d'] ? argv['d'] : argv['dir'];
         if (!dir)
@@ -47,6 +51,10 @@ function showUsage(command) {
 
     rl.write("\n");
     switch (command) {
+        case 'help':
+            rl.write("Usage:\t\teximanager help <command>\n");
+            break;
+
         case 'init':
             rl.write("Usage:\t\teximanager init -d|--dir <configuration-directory>\n\n");
             rl.write("\t\t<configuration-directory> is either /etc or /usr/local/etc\n");
@@ -55,6 +63,7 @@ function showUsage(command) {
         default:
             rl.write("Usage:\t\teximanager <command> [options]\n");
             rl.write("\nCommands:\n");
+            rl.write("\t\thelp\t\tPrint help screen\n");
             rl.write("\t\tinit\t\tInitialize Eximanager\n");
     }
 
