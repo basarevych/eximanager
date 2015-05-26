@@ -1,4 +1,7 @@
 module.exports = {
     config_dir: "/etc/mail/virtual",        // Configuration directory
     data_dir:   "/home/mail",               // Mail directory
+
+    user: "mailnull",                       // Configuration and mail owner
+    group: "mail",
 };

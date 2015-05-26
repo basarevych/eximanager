@@ -1,7 +1,5 @@
 'use strict'
 
-var fs = require('fs');
-
 function Init(serviceLocator) {
     this.sl = serviceLocator;
 
