@@ -41,6 +41,11 @@ FileManager.prototype.countLines = function (filename) {
     var logger = this.sl.get('logger'),
         defer = q.defer();
 
+    if (!fs.existsSync(filename)) {
+        defer.resolve(0);
+        return defer.promise;
+    }
+
     var count = 0, i;
     fs.createReadStream(filename)
         .on('data', function (chunk) {

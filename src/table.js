@@ -37,7 +37,7 @@ Table.prototype.print = function (header, rows) {
 
     for (var i = 0; i < rows.length; i++) {
         for (var j = 0; j < rows[i].length; j++) {
-            rl.write(sprintf('%-' + (widths[i] + 2) + 's', " " + rows[i][j]));
+            rl.write(sprintf('%-' + (widths[j] + 2) + 's', " " + rows[i][j]));
             rl.write(j == rows[i].length - 1 ? "\n" : "|");
         }
     }
