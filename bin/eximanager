@@ -52,19 +52,19 @@ function showUsage(command) {
     rl.write("\n");
     switch (command) {
         case 'help':
-            rl.write("Usage:\t\teximanager help <command>\n");
+            rl.write("Usage:\teximanager help <command>\n");
             break;
 
         case 'init':
-            rl.write("Usage:\t\teximanager init -d|--dir <configuration-directory>\n\n");
-            rl.write("\t\t<configuration-directory> is either /etc or /usr/local/etc\n");
+            rl.write("Usage:\teximanager init -d|--dir <configuration-directory>\n\n");
+            rl.write("\t<configuration-directory> is either /etc or /usr/local/etc\n");
             break;
 
         default:
-            rl.write("Usage:\t\teximanager <command> [options]\n");
+            rl.write("Usage:\teximanager <command> [options]\n");
             rl.write("\nCommands:\n");
-            rl.write("\t\thelp\t\tPrint help screen\n");
-            rl.write("\t\tinit\t\tInitialize Eximanager\n");
+            rl.write("\thelp\t\tPrint help screen\n");
+            rl.write("\tinit\t\tInitialize Eximanager\n");
     }
 
     rl.write("\n");
