@@ -31,12 +31,18 @@ Domain.prototype.list = function () {
                             items[index]['users'] = num;
                             if (++userCounter == items.length)
                                 userDefer.resolve();
+                        })
+                        .catch(function () {
+                            userDefer.reject();
                         });
                     fm.countLines(config['config_dir'] + '/' + items[index].name + '/aliases')
                         .then(function (num) {
                             items[index]['aliases'] = num;
                             if (++aliasCounter == items.length)
                                 aliasDefer.resolve();
+                        })
+                        .catch(function () {
+                            aliasDefer.reject();
                         });
                 })(i);
             }
