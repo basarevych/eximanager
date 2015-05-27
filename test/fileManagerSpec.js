@@ -1,6 +1,7 @@
 'use strict';
 
 var fs              = require('fs'),
+    q               = require('q'),
     ServiceLocator  = require('../src/service-locator.js'),
     FileManager     = require('../src/file-manager.js');
 
@@ -40,6 +41,23 @@ describe("FileManager", function () {
             .then(function (lines) {
                 fs.unlinkSync(filename);
                 expect(lines).toBe(3);
+                done();
+            });
+    });
+
+    it("looks up a key", function (done) {
+        var filename = '/tmp/test.tmp';
+
+        fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        q.all([
+            fm.lookup(filename, 'line1a'),
+            fm.lookup(filename, 'line2a'),
+            fm.lookup(filename, 'line3a'),
+        ]).then(function (result) {
+                fs.unlinkSync(filename);
+                expect(result[0]).toBe('line1b');
+                expect(result[1]).toBe('line2b');
+                expect(result[2]).toBe('line3b');
                 done();
             });
     });

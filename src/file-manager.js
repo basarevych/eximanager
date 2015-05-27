@@ -87,7 +87,7 @@ FileManager.prototype.lookup = function (filename, key) {
         var lines = data.split("\n");
         for (var i = 0; i < lines.length; i++) {
             var fields = lines[i].split(":");
-            if (fields[0] == key) {
+            if (fields[0].trim() == key) {
                 fields.shift();
                 defer.resolve(fields.join(":").trim());
                 return;
