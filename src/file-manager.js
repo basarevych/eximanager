@@ -23,13 +23,16 @@ FileManager.prototype.iterateDir = function (dir) {
         }
 
         var result = [];
-        files.forEach(function (file) {
-            var stats = fs.statSync(dir + '/' + file);
-            result.push({
-                name: file,
-                stats: stats,
+
+        files
+            .sort()
+            .forEach(function (file) {
+                var stats = fs.statSync(dir + '/' + file);
+                result.push({
+                    name: file,
+                    stats: stats,
+                });
             });
-        });
 
         defer.resolve(result);
     });
