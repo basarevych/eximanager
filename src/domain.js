@@ -21,11 +21,18 @@ Domain.prototype.list = function () {
             var directories = files.filter(function (el) { return el.stats.isDirectory(); });
 
             var items = new Array(directories.length);
+            var mxDefer = q.defer(), mxCounter = 0;
             var userDefer = q.defer(), userCounter = 0;
             var aliasDefer = q.defer(), aliasCounter = 0;
             for (var i = 0; i < items.length; i++) {
                 items[i] = { name: directories[i].name };
                 (function (index) {
+                    fm.lookup(config['config_dir'] + '/exim.domain2mx', items[index].name)
+                        .then(function (result) {
+                            items[index]['mx'] = result;
+                            if (++mxCounter == items.length)
+                                mxDefer.resolve();
+                        });
                     fm.countLines(config['config_dir'] + '/' + items[index].name + '/master.passwd')
                         .then(function (num) {
                             items[index]['users'] = num;
@@ -47,13 +54,18 @@ Domain.prototype.list = function () {
                 })(i);
             }
 
-            q.all([ userDefer.promise, aliasDefer.promise ])
+            q.all([ mxDefer.promise, userDefer.promise, aliasDefer.promise ])
                 .then(function () {
                     var rows = [];
                     items.forEach(function (el) {
-                        rows.push([ el.name, el.users.toString(), el.aliases.toString() ]);
+                        rows.push([
+                            el.name,
+                            el.mx,
+                            el.users.toString(),
+                            el.aliases.toString()
+                        ]);
                     });
-                    table.print([ 'Domain', 'Users', 'Aliases' ], rows);
+                    table.print([ 'Domain', 'MX', 'Users', 'Aliases' ], rows);
                 });
         });
 };

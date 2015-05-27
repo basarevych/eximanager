@@ -49,10 +49,10 @@ FileManager.prototype.countLines = function (filename) {
         return defer.promise;
     }
 
-    var count = 0, i;
+    var count = 0;
     fs.createReadStream(filename)
         .on('data', function (chunk) {
-            for (i = 0; i < chunk.length; ++i) {
+            for (var i = 0; i < chunk.length; ++i) {
                 if (chunk[i] == "\n".charCodeAt(0))
                     count++;
             }
@@ -68,19 +68,51 @@ FileManager.prototype.countLines = function (filename) {
     return defer.promise;
 };
 
+FileManager.prototype.lookup = function (filename, key) {
+    var logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    if (!fs.existsSync(filename)) {
+        defer.resolve("");
+        return defer.promise;
+    }
+
+    fs.readFile(filename, 'utf-8', function (err, data) {
+        if (err) {
+            logger.error("Error reading file: " + filename, err);
+            defer.reject(err);
+            return;
+        }
+
+        var lines = data.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            var fields = lines[i].split(":");
+            if (fields[0] == key) {
+                fields.shift();
+                defer.resolve(fields.join(":").trim());
+                return;
+            }
+        }
+
+        defer.resolve("");
+    });
+
+    return defer.promise;
+};
+
 FileManager.prototype.copyFile = function (source, target) {
     var logger = this.sl.get('logger'),
         defer = q.defer();
 
     var rd = fs.createReadStream(source);
     rd.on("error", function (err) {
-        logger.error("Error reading file: " + err);
+        logger.error("Error reading file: " + source, err);
         defer.reject(err);
     });
 
     var wr = fs.createWriteStream(target);
     wr.on("error", function(err) {
-        logger.error("Error writing file: " + err);
+        logger.error("Error writing file: " + target, err);
         defer.reject(err);
     });
     wr.on("close", function(ex) {
