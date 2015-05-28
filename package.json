@@ -20,9 +20,11 @@
   },
   "dependencies": {
     "minimist": "^1.1.1",
+    "mkdirp": "^0.5.1",
     "q": "^1.4.1",
     "sprintf-js": "^1.0.2",
-    "tracer": "^0.7.4"
+    "tracer": "^0.7.4",
+    "userid": "^0.1.2"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.5"

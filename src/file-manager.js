@@ -1,7 +1,10 @@
 'use strict'
 
-var fs  = require('fs'),
-    q   = require('q');
+var fs      = require('fs'),
+    q       = require('q'),
+    path    = require('path'),
+    mkdirp  = require('mkdirp'),
+    userid  = require('userid');
 
 function FileManager(serviceLocator) {
     this.sl = serviceLocator;
@@ -10,6 +13,100 @@ function FileManager(serviceLocator) {
 };
 
 module.exports = FileManager;
+
+FileManager.prototype.checkDir = function (dirname) {
+    var logger = this.sl.get('logger'),
+        config = this.sl.get('config'),
+        defer = q.defer();
+
+    if (fs.existsSync(dirname)) {
+        var stat = fs.statSync(dirname);
+        if (!stat.isDirectory()) {
+            logger.error("Target is not a directory: " + dirname);
+            defer.reject();
+            return promise;
+        }
+
+        defer.resolve();
+        return defer.promise;
+    }
+
+    mkdirp(dirname, { mode: config['dir_mode'] }, function (err) {
+        if (err) {
+            logger.error("Error creating directory: " + dinamer, err);
+            defer.reject(err);
+            return;
+        }
+
+        if (process.getuid() != 0) {
+            defer.resolve();
+            return;
+        }
+
+        fs.chown(dirname, userid.uid(config['user']), userid.gid(config['group']), function (err) {
+            if (err) {
+                logger.error("Error changing owner to: " + config['user'] + ':' + config['group'], err);
+                defer.reject();
+                return;
+            }
+
+            defer.resolve();
+        });
+    });
+
+    return defer.promise;
+};
+
+FileManager.prototype.checkFile = function (filename, mode) {
+    var logger = this.sl.get('logger'),
+        config = this.sl.get('config'),
+        defer = q.defer();
+
+    if (fs.existsSync(filename)) {
+        var stat = fs.statSync(filename);
+        if (!stat.isFile()) {
+            logger.error("Target is not a file: " + filename);
+            defer.reject();
+            return promise;
+        }
+
+        defer.resolve();
+        return defer.promise;
+    }
+
+    this.checkDir(path.dirname(filename))
+        .then(function () {
+            fs.open(filename, "a", config['file_mode'], function (err, fd) {
+                if (err) {
+                    logger.error("Error creating file: " + filename, err);
+                    defer.reject(err);
+                    return;
+                }
+
+                fs.closeSync(fd);
+
+                if (process.getuid() != 0) {
+                    defer.resolve();
+                    return;
+                }
+
+                fs.chown(filename, userid.uid(config['user']), userid.gid(config['group']), function (err) {
+                    if (err) {
+                        logger.error("Error changing owner to: " + config['user'] + ':' + config['group'], err);
+                        defer.reject();
+                        return;
+                    }
+
+                    defer.resolve();
+                });
+            });
+        })
+        .catch(function () {
+            defer.reject();
+        });
+
+    return defer.promise;
+};
 
 FileManager.prototype.iterateDir = function (dir) {
     var logger = this.sl.get('logger'),

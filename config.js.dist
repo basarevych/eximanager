@@ -4,4 +4,6 @@ module.exports = {
 
     user: "mailnull",                       // Configuration and mail owner
     group: "mail",
+    file_mode: 0640,                        // Permissions
+    dir_mode: 0750,
 };

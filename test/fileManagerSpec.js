@@ -6,11 +6,53 @@ var fs              = require('fs'),
     FileManager     = require('../src/file-manager.js');
 
 describe("FileManager", function () {
-    var sl, fm;
+    var sl, fm, config;
 
     beforeEach(function () {
         sl = new ServiceLocator();
         fm = new FileManager(sl);
+
+        config = sl.get('config');
+        config['file_mode'] = parseInt('0640', 8);
+        config['dir_mode'] = parseInt('0750', 8);
+        sl.setAllowOverride(true);
+        sl.set('config', config);
+    });
+
+    it("checks directory", function (done) {
+        var dir = '/tmp/eximanager-test/one/two';
+
+        fm.checkDir(dir)
+            .then(function () {
+                var stat = fs.statSync(dir);
+
+                var parts = dir.split('/');
+                fs.rmdirSync(parts.join('/'));
+                parts.pop();
+                fs.rmdirSync(parts.join('/'));
+                parts.pop();
+                fs.rmdirSync(parts.join('/'));
+
+                expect(stat.mode.toString(8)).toBe('40750');
+                done();
+            });
+    });
+
+    it("checks file", function (done) {
+        var file = '/tmp/eximanager-test/file';
+
+        fm.checkFile(file)
+            .then(function () {
+                var stat = fs.statSync(file);
+
+                var parts = file.split('/');
+                fs.unlinkSync(parts.join('/'));
+                parts.pop();
+                fs.rmdirSync(parts.join('/'));
+
+                expect(stat.mode.toString(8)).toBe('100640');
+                done();
+            });
     });
 
     it("iterates directory", function (done) {

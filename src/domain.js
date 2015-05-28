@@ -19,7 +19,8 @@ Domain.prototype.get = function (filter) {
     if (filter)
         filter = new RegExp(filter);
 
-    fm.iterateDir(config['config_dir'])
+    fm.checkDir(config['config_dir'])
+        .then(function () { return fm.iterateDir(config['config_dir']); })
         .then(function (files) {
             var directories = files.filter(function (el) {
                 if (!el.stats.isDirectory())
@@ -79,4 +80,17 @@ Domain.prototype.get = function (filter) {
                     table.print([ 'Domain', 'MX', 'Users', 'Aliases' ], rows);
                 });
         });
+};
+
+Domain.prototype.set = function (name, mx) {
+    var config = this.sl.get('config'),
+        fm = this.sl.get('file-manager');
+
+    var dir = config['config_dir'] + '/' + name;
+    fm.checkDir(dir)
+        .then(function () { return fm.checkFile(dir + '/master.passwd'); })
+        .then(function () { return fm.checkFile(dir + '/passwd'); })
+        .then(function () { return fm.checkFile(dir + '/aliases'); })
+        .then(function () { return fm.checkFile(dir + '/quota'); })
+        .then(function () { return fm.checkDir(config['data_dir'] + '/' + name); });
 };
