@@ -53,6 +53,13 @@ switch (argv['_'][0]) {
         domain.set(name, mx);
         break;
 
+    case 'domain-del':
+        if (argv['_'].length <= 1)
+            showUsage('domain-del');
+        else
+            domain.del(argv['_'][1]);
+        break;
+
     default:
         var rl = cons.getReadline();
         rl.write("\nError: \t\tUnkown command: " + argv['_'][0] + "\n\n");
@@ -92,6 +99,15 @@ function showUsage(command) {
             rl.write("\tand set it's MX to \"mx.example.com\"\n");
             break;
 
+        case 'domain-del':
+            rl.write("Usage:\teximanager domain-del <domain-name>\n\n");
+            rl.write("\tDelete domain configuration data\n\n");
+            rl.write("\teximanager domain-del example.com\n");
+            rl.write("\tWill delete the domain \"example.com\".\n\n");
+            rl.write("\tNote: Domain mail (in eximanager.conf.js:data_dir) will not be deleted.\n");
+            rl.write("\t      You will need to delete it by hand.\n");
+            break;
+
         default:
             rl.write("Usage:\t\teximanager <command> [options]\n");
             rl.write("\nCommands:");
@@ -99,6 +115,7 @@ function showUsage(command) {
             rl.write("\t\tinit\t\tInitialize Eximanager\n");
             rl.write("\t\tdomain-get\tFiltered list of virtual domains\n");
             rl.write("\t\tdomain-set\tCreate or modify virtual domain\n");
+            rl.write("\t\tdomain-del\tDelete virtual domain\n");
             rl.write("\nNote:\t\tRun \"eximanager help <command>\" for help on the command\n");
     }
 

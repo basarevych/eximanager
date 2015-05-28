@@ -76,7 +76,7 @@ describe("FileManager", function () {
     });
 
     it("counts lines", function (done) {
-        var filename = '/tmp/test.tmp';
+        var filename = '/tmp/eximanager-test.tmp';
 
         fs.writeFileSync(filename, "one\ntwo\nthree\n");
         fm.countLines(filename)
@@ -88,7 +88,7 @@ describe("FileManager", function () {
     });
 
     it("looks up a key", function (done) {
-        var filename = '/tmp/test.tmp';
+        var filename = '/tmp/eximanager-test.tmp';
 
         fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
         q.all([
@@ -106,7 +106,7 @@ describe("FileManager", function () {
 
     it("copies file", function (done) {
         var filename1 = __dirname + '/../config.js.dist',
-            filename2 = '/tmp/test.tmp';
+            filename2 = '/tmp/eximanager-test.tmp';
 
         fm.copyFile(filename1, filename2)
             .then(function () {
@@ -120,7 +120,7 @@ describe("FileManager", function () {
     });
 
     it("writes simple file", function (done) {
-        var filename = '/tmp/test.tmp';
+        var filename = '/tmp/eximanager-test.tmp';
 
         fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
         fm.writeSimpleFile(filename, 'line2a', 'foobar')
@@ -132,4 +132,31 @@ describe("FileManager", function () {
             });
     });
 
+    it("removes directory recursively", function (done) {
+        var dir = '/tmp/eximanager-test/one/two',
+            file = '/tmp/eximanager-test/one/three';
+
+        fm.checkDir(dir)
+            .then(function () {
+                fs.closeSync(fs.openSync(file, "w"));
+                fm.rmDir('/tmp/eximanager-test')
+                    .then(function () {
+                        expect(fs.existsSync('/tmp/eximanager-test')).toBeFalsy();
+                        done();
+                    });
+            });
+    });
+
+    it("removes key from file", function (done) {
+        var filename = '/tmp/eximanager-test.tmp';
+
+        fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        fm.rmKey(filename, 'line2a')
+            .then(function () {
+                var result = fs.readFileSync(filename, 'utf-8');
+                fs.unlinkSync(filename);
+                expect(result).toBe("line1a: line1b\nline3a: line3b\n");
+                done();
+            });
+    });
 });

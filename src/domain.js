@@ -98,3 +98,22 @@ Domain.prototype.set = function (name, mx) {
                 fm.writeSimpleFile(config['config_dir'] + '/exim.domain2mx', name, mx);
         });
 };
+
+Domain.prototype.del = function (name) {
+    var config = this.sl.get('config'),
+        fm = this.sl.get('file-manager'),
+        rl = this.sl.get('console').getReadline();
+
+    fm.rmKey(config['config_dir'] + '/exim.domain2mx', name)
+        .then(function () {
+            var dirname = config['config_dir'] + '/' + name;
+            if (!fs.existsSync(dirname)) {
+                rl.write("Error:\tDomain " + name + " does not exist\n");
+                rl.close();
+                return;
+            }
+
+            fm.rmDir(dirname);
+            rl.close();
+        });
+};

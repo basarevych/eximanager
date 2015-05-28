@@ -224,46 +224,145 @@ FileManager.prototype.writeSimpleFile = function (filename, key, value) {
     var logger = this.sl.get('logger'),
         defer = q.defer();
 
-    if (!fs.existsSync(filename))
-        this.checkFile(filename);
+    this.checkFile(filename)
+        .then(function () {
+            fs.readFile(filename, 'utf-8', function (err, data) {
+                if (err) {
+                    logger.error("Error reading file: " + filename, err);
+                    defer.reject(err);
+                    return;
+                }
 
-    fs.readFile(filename, 'utf-8', function (err, data) {
-        if (err) {
-            logger.error("Error reading file: " + filename, err);
-            defer.reject(err);
-            return;
-        }
+                var result = "", found = false;
+                var lines = data.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].trim() == "")
+                        continue;
 
-        var result = "", found = false;
-        var lines = data.split("\n");
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].trim() == "")
-                continue;
+                    var columns = lines[i].split(':');
+                    var thisKey = columns.shift().trim();
+                    var thisValue = columns.join(':').trim();
+                    if (thisKey == key) {
+                        found = true;
+                        thisValue = value;
+                    }
 
-            var columns = lines[i].split(':');
-            var thisKey = columns.shift().trim();
-            var thisValue = columns.join(':').trim();
-            if (thisKey == key) {
-                found = true;
-                thisValue = value;
-            }
+                    result += thisKey + ': ' + thisValue + "\n";
+                }
 
-            result += thisKey + ': ' + thisValue + "\n";
-        }
+                if (!found)
+                    result += key + ': ' + value + "\n";
 
-        if (!found)
-            result += key + ': ' + value + "\n";
+                fs.writeFile(filename, result, 'utf-8', function (err) {
+                    if (err) {
+                        logger.error("Error writing file: " + filename, err);
+                        defer.reject(err);
+                        return;
+                    }
 
-        fs.writeFile(filename, result, 'utf-8', function (err) {
-            if (err) {
-                logger.error("Error writing file: " + filename, err);
-                defer.reject(err);
-                return;
-            }
-
-            defer.resolve();
+                    defer.resolve();
+                });
+            });
         });
-    });
+
+    return defer.promise;
+};
+
+FileManager.prototype.rmDir = function (dirname) {
+    var me = this,
+        logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    if (!fs.existsSync(dirname)) {
+        defer.resolve();
+        return defer.promise;
+    }
+
+    this.iterateDir(dirname)
+        .then(function (files) {
+            var tasks = [];
+            files.forEach(function (item) {
+                var thisFile = dirname + '/' + item.name;
+                if (item.stats.isDirectory()) {
+                    tasks.push(me.rmDir(thisFile));
+                    return;
+                }
+
+                var task = q.defer();
+                tasks.push(task.promise);
+                fs.unlink(thisFile, function (err) {
+                    if (err) {
+                        logger.error("Error deleting file: " + thisFile, err);
+                        task.reject(err);
+                        return;
+                    }
+
+                    task.resolve();
+                });
+            });
+
+            q.all(tasks)
+                .then(function () {
+                    fs.rmdir(dirname, function (err) {
+                        if (err) {
+                            logger.error("Error deleting directory: " + dirname, err);
+                            defer.reject(err);
+                            return;
+                        }
+
+                        defer.resolve();
+                    });
+                })
+                .catch(function (err) {
+                    defer.reject(err);
+                });
+        })
+        .catch(function (err) {
+            defer.reject(err);
+        });
+
+    return defer.promise;
+};
+
+FileManager.prototype.rmKey = function (filename, key) {
+    var logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    this.checkFile(filename)
+        .then(function () {
+            fs.readFile(filename, 'utf-8', function (err, data) {
+                if (err) {
+                    logger.error("Error reading file: " + filename, err);
+                    defer.reject(err);
+                    return;
+                }
+
+                var result = "";
+                var lines = data.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].trim() == "")
+                        continue;
+
+                    var columns = lines[i].split(':');
+                    var thisKey = columns.shift().trim();
+                    var thisValue = columns.join(':').trim();
+                    if (thisKey == key)
+                        continue;
+
+                    result += thisKey + ': ' + thisValue + "\n";
+                }
+
+                fs.writeFile(filename, result, 'utf-8', function (err) {
+                    if (err) {
+                        logger.error("Error writing file: " + filename, err);
+                        defer.reject(err);
+                        return;
+                    }
+
+                    defer.resolve();
+                });
+            });
+        });
 
     return defer.promise;
 };
