@@ -43,8 +43,8 @@ switch (argv['_'][0]) {
         init.createConfig(dir);
         break;
 
-    case 'domain-list':
-        domain.list();
+    case 'domain-get':
+        domain.get(argv['_'].length > 1 ? argv['_'][1] : null);
         break;
 
     default:
@@ -61,7 +61,8 @@ function showUsage(command) {
     switch (command) {
         case 'help':
             rl.write("Usage:\teximanager help <command>\n\n");
-            rl.write("\tPrint usage help on <command>\n");
+            rl.write("\tPrint usage info on <command>\n\n");
+            rl.write("Note:\tRun eximanager without arguments to get list of commands\n");
             break;
 
         case 'init':
@@ -70,17 +71,20 @@ function showUsage(command) {
             rl.write("\t<configuration-directory> is either /etc or /usr/local/etc\n");
             break;
 
-        case 'domain-list':
-            rl.write("Usage:\teximanager domain-list\n\n");
-            rl.write("\tPrint all the defined virtual mail domains\n");
+        case 'domain-get':
+            rl.write("Usage:\teximanager domain-get [<regexp-filter>]\n\n");
+            rl.write("\tPrint defined virtual mail domains\n\n");
+            rl.write("\teximanager domain-get '^ex.*com$'\n");
+            rl.write("\tWill print all the domains starting with \"ex\" and ending with \"com\"\n");
             break;
 
         default:
-            rl.write("Usage:\teximanager <command> [options]\n");
-            rl.write("\nCommands:\n");
-            rl.write("\thelp\t\tPrint help screen\n");
-            rl.write("\tinit\t\tInitialize Eximanager\n");
-            rl.write("\tdomain-list\tList virtual domains\n");
+            rl.write("Usage:\t\teximanager <command> [options]\n");
+            rl.write("\nCommands:");
+            rl.write("\thelp\t\t\tPrint help screen\n");
+            rl.write("\t\tinit\t\t\tInitialize Eximanager\n");
+            rl.write("\t\tdomain-get\t\tFiltered list of virtual domains\n\n");
+            rl.write("Note:\t\tRun \"eximanager help <command>\" for help on the command\n");
     }
 
     rl.write("\n");

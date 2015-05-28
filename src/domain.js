@@ -11,14 +11,25 @@ function Domain(serviceLocator) {
 
 module.exports = Domain;
 
-Domain.prototype.list = function () {
+Domain.prototype.get = function (filter) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
         table = this.sl.get('table');
 
+    if (filter)
+        filter = new RegExp(filter);
+
     fm.iterateDir(config['config_dir'])
         .then(function (files) {
-            var directories = files.filter(function (el) { return el.stats.isDirectory(); });
+            var directories = files.filter(function (el) {
+                if (!el.stats.isDirectory())
+                    return false;
+
+                if (filter)
+                    return filter.test(el.name);
+
+                return true;
+            });
 
             var items = new Array(directories.length);
             var mxDefer = q.defer(), mxCounter = 0;
