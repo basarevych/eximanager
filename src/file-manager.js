@@ -219,3 +219,51 @@ FileManager.prototype.copyFile = function (source, target) {
     rd.pipe(wr);
     return defer.promise;
 };
+
+FileManager.prototype.writeSimpleFile = function (filename, key, value) {
+    var logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    if (!fs.existsSync(filename))
+        this.checkFile(filename);
+
+    fs.readFile(filename, 'utf-8', function (err, data) {
+        if (err) {
+            logger.error("Error reading file: " + filename, err);
+            defer.reject(err);
+            return;
+        }
+
+        var result = "", found = false;
+        var lines = data.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].trim() == "")
+                continue;
+
+            var columns = lines[i].split(':');
+            var thisKey = columns.shift().trim();
+            var thisValue = columns.join(':').trim();
+            if (thisKey == key) {
+                found = true;
+                thisValue = value;
+            }
+
+            result += thisKey + ': ' + thisValue + "\n";
+        }
+
+        if (!found)
+            result += key + ': ' + value + "\n";
+
+        fs.writeFile(filename, result, 'utf-8', function (err) {
+            if (err) {
+                logger.error("Error writing file: " + filename, err);
+                defer.reject(err);
+                return;
+            }
+
+            defer.resolve();
+        });
+    });
+
+    return defer.promise;
+};

@@ -92,5 +92,9 @@ Domain.prototype.set = function (name, mx) {
         .then(function () { return fm.checkFile(dir + '/passwd'); })
         .then(function () { return fm.checkFile(dir + '/aliases'); })
         .then(function () { return fm.checkFile(dir + '/quota'); })
-        .then(function () { return fm.checkDir(config['data_dir'] + '/' + name); });
+        .then(function () { return fm.checkDir(config['data_dir'] + '/' + name); })
+        .then(function () {
+            if (mx)
+                fm.writeSimpleFile(config['config_dir'] + '/exim.domain2mx', name, mx);
+        });
 };

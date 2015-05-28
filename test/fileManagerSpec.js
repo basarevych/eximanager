@@ -118,4 +118,18 @@ describe("FileManager", function () {
                 done();
             });
     });
+
+    it("writes simple file", function (done) {
+        var filename = '/tmp/test.tmp';
+
+        fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        fm.writeSimpleFile(filename, 'line2a', 'foobar')
+            .then(function () {
+                var result = fs.readFileSync(filename, 'utf-8');
+                fs.unlinkSync(filename);
+                expect(result).toBe("line1a: line1b\nline2a: foobar\nline3a: line3b\n");
+                done();
+            });
+    });
+
 });
