@@ -243,8 +243,8 @@ FileManager.prototype.readSimpleFile = function (filename) {
                 continue;
 
             var fields = lines[i].split(":");
-            for (var i = 0; i < fields.length; i++)
-                fields[i] = fields[i].trim();
+            for (var j = 0; j < fields.length; j++)
+                fields[j] = fields[j].trim();
             result.push(fields);
         }
 

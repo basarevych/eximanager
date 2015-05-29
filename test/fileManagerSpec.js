@@ -119,6 +119,18 @@ describe("FileManager", function () {
             });
     });
 
+    it("reads simple file", function (done) {
+        var filename = '/tmp/eximanager-test.tmp';
+
+        fs.writeFileSync(filename, "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        fm.readSimpleFile(filename)
+            .then(function (result) {
+                fs.unlinkSync(filename);
+                expect(result).toEqual([ ["line1a", "line1b"], ["line2a", "line2b"], ["line3a", "line3b"] ]);
+                done();
+            });
+    });
+
     it("writes simple file", function (done) {
         var filename = '/tmp/eximanager-test.tmp';
 
