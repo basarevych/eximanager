@@ -40,19 +40,16 @@ Ip.prototype.set = function (ip, name) {
 
 Ip.prototype.del = function (ip) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     var filename = config['config_dir'] + '/exim.ip2mx';
     fm.lookup(filename, ip)
         .then(function (value) {
             if (value.length == 0) {
-                rl.write("Error:\tIP " + ip + " is not configured\n");
-                rl.close();
+                console.error("Error:\tIP " + ip + " is not configured");
                 return;
             }
 
             fm.rmKey(filename, ip);
-            rl.close();
         });
 };

@@ -14,13 +14,11 @@ module.exports = Alias;
 Alias.prototype.get = function (domain, filter) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
-        table = this.sl.get('table'),
-        rl = this.sl.get('console').getReadline();
+        table = this.sl.get('table');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
@@ -36,35 +34,29 @@ Alias.prototype.get = function (domain, filter) {
                 filtered = rows;
 
             table.print([ 'Alias', 'Target' ], filtered);
-            rl.close();
         });
 };
 
 Alias.prototype.set = function (domain, alias, target) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
     fm.writeSimpleFile(dirname + '/aliases', alias, target);
-    rl.close();
 };
 
 Alias.prototype.del = function (domain, alias) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
@@ -72,12 +64,10 @@ Alias.prototype.del = function (domain, alias) {
     fm.lookup(filename, alias)
         .then(function (value) {
             if (value.length == 0) {
-                rl.write("Error:\tAlias " + alias + " for " + domain + " does not exist\n");
-                rl.close();
+                console.error("Error:\tAlias " + alias + " at " + domain + " does not exist");
                 return;
             }
 
             fm.rmKey(filename, alias);
-            rl.close();
         });
 };

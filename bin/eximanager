@@ -26,14 +26,18 @@ var sl = new ServiceLocator(),
 if (argv['_'].length == 0)
     showUsage();
 
-if (argv['_'].length && argv['_'][0] != 'init' && !sl.has('config')) {
-    var rl = cons.getReadline();
-
-    rl.write("\nError:\t\tEximanager is not initialized\n");
-    rl.write("\t\tPlease run 'eximanager init' before using\n\n");
-    rl.close();
+if (process.getuid() != 0) {
+    console.error("\nError:\t\tInsufficient privileges");
+    console.error("\t\tPlease run eximanager as root\n");
 
     process.exit(2);
+}
+
+if (argv['_'].length && argv['_'][0] != 'init' && !sl.has('config')) {
+    console.error("\nError:\t\tEximanager is not initialized");
+    console.error("\t\tPlease run 'eximanager init' before using\n");
+
+    process.exit(3);
 }
 
 switch (argv['_'][0]) {

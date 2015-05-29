@@ -14,13 +14,11 @@ module.exports = User;
 User.prototype.get = function (domain, filter) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
-        table = this.sl.get('table'),
-        rl = this.sl.get('console').getReadline();
+        table = this.sl.get('table');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
@@ -36,30 +34,27 @@ User.prototype.get = function (domain, filter) {
                 filtered = rows;
 
             table.print([ 'Account', 'Quota' ], filtered);
-            rl.close();
         });
 };
 
 User.prototype.set = function (domain, account, setPassword, setQuota) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
     var passwordDefer = q.defer();
     if (setPassword) {
+        var rl = this.sl.get('console').getReadline();
         rl.question("New password: ", function (password) {
             rl.close();
             passwordDefer.resolve(password);
         });
     } else {
-        rl.close();
         passwordDefer.resolve(null);
     }
 
@@ -78,13 +73,11 @@ User.prototype.set = function (domain, account, setPassword, setQuota) {
 
 User.prototype.del = function (domain, account) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     var dirname = config['config_dir'] + '/' + domain;
     if (!fs.existsSync(dirname)) {
-        rl.write("Error:\tDomain " + domain + " does not exist\n");
-        rl.close();
+        console.error("Error:\tDomain " + domain + " does not exist");
         return;
     }
 
@@ -93,14 +86,12 @@ User.prototype.del = function (domain, account) {
         fm.lookup(dirname + '/passwd', account)
     ]).then(function (result) {
         if (result[0].length == 0 && result[1].length == 0) {
-            rl.write("Error:\tUser " + account + " at " + domain + " does not exist\n");
-            rl.close();
+            console.error("Error:\tUser " + account + " at " + domain + " does not exist");
             return;
         }
 
         fm.rmKey(dirname + '/master.passwd', account);
         fm.rmKey(dirname + '/passwd', account);
         fm.rmKey(dirname + '/quota', account);
-        rl.close();
     });
 };

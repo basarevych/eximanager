@@ -16,14 +16,13 @@ function FileManager(serviceLocator) {
 module.exports = FileManager;
 
 FileManager.prototype.checkDir = function (dirname) {
-    var logger = this.sl.get('logger'),
-        config = this.sl.get('config'),
+    var config = this.sl.get('config'),
         defer = q.defer();
 
     if (fs.existsSync(dirname)) {
         var stat = fs.statSync(dirname);
         if (!stat.isDirectory()) {
-            logger.error("Target is not a directory: " + dirname);
+            console.error("Error:\tTarget is not a directory: " + dirname);
             defer.reject();
             return promise;
         }
@@ -34,7 +33,7 @@ FileManager.prototype.checkDir = function (dirname) {
 
     mkdirp(dirname, { mode: config['dir_mode'] }, function (err) {
         if (err) {
-            logger.error("Error creating directory: " + dinamer, err);
+            console.error("Error:\tFailed to create directory: " + dirname);
             defer.reject(err);
             return;
         }
@@ -46,7 +45,7 @@ FileManager.prototype.checkDir = function (dirname) {
 
         fs.chown(dirname, userid.uid(config['user']), userid.gid(config['group']), function (err) {
             if (err) {
-                logger.error("Error changing owner to: " + config['user'] + ':' + config['group'], err);
+                console.error("Error:\tFailed to change owner to: " + config['user'] + ':' + config['group']);
                 defer.reject();
                 return;
             }
@@ -59,14 +58,13 @@ FileManager.prototype.checkDir = function (dirname) {
 };
 
 FileManager.prototype.checkFile = function (filename, mode) {
-    var logger = this.sl.get('logger'),
-        config = this.sl.get('config'),
+    var config = this.sl.get('config'),
         defer = q.defer();
 
     if (fs.existsSync(filename)) {
         var stat = fs.statSync(filename);
         if (!stat.isFile()) {
-            logger.error("Target is not a file: " + filename);
+            console.error("Error:\tTarget is not a file: " + filename);
             defer.reject();
             return promise;
         }
@@ -79,7 +77,7 @@ FileManager.prototype.checkFile = function (filename, mode) {
         .then(function () {
             fs.open(filename, "a", config['file_mode'], function (err, fd) {
                 if (err) {
-                    logger.error("Error creating file: " + filename, err);
+                    console.error("Error:\tFailed to create file: " + filename);
                     defer.reject(err);
                     return;
                 }
@@ -93,7 +91,7 @@ FileManager.prototype.checkFile = function (filename, mode) {
 
                 fs.chown(filename, userid.uid(config['user']), userid.gid(config['group']), function (err) {
                     if (err) {
-                        logger.error("Error changing owner to: " + config['user'] + ':' + config['group'], err);
+                        console.error("Error:\tFailed to change owner to: " + config['user'] + ':' + config['group']);
                         defer.reject();
                         return;
                     }
@@ -110,12 +108,11 @@ FileManager.prototype.checkFile = function (filename, mode) {
 };
 
 FileManager.prototype.iterateDir = function (dir) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     fs.readdir(dir, function (err, files) {
         if (err) {
-            logger.error("Failed to read directory", err);
+            console.error("Error:\tFailed to read directory");
             defer.reject(err);
             return;
         }
@@ -139,8 +136,7 @@ FileManager.prototype.iterateDir = function (dir) {
 };
 
 FileManager.prototype.countLines = function (filename) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     if (!fs.existsSync(filename)) {
         defer.resolve(0);
@@ -156,7 +152,7 @@ FileManager.prototype.countLines = function (filename) {
             }
         })
         .on('error', function (err) {
-            logger.error('Error reading file: ' + filename, err);
+            console.error('Error\tFailed to read file: ' + filename);
             defer.reject(err);
         })
         .on('end', function() {
@@ -167,8 +163,7 @@ FileManager.prototype.countLines = function (filename) {
 };
 
 FileManager.prototype.lookup = function (filename, key) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     if (!fs.existsSync(filename)) {
         defer.resolve("");
@@ -177,7 +172,7 @@ FileManager.prototype.lookup = function (filename, key) {
 
     fs.readFile(filename, 'utf-8', function (err, data) {
         if (err) {
-            logger.error("Error reading file: " + filename, err);
+            console.error("Error:\tFailed to read file: " + filename);
             defer.reject(err);
             return;
         }
@@ -199,18 +194,17 @@ FileManager.prototype.lookup = function (filename, key) {
 };
 
 FileManager.prototype.copyFile = function (source, target) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     var rd = fs.createReadStream(source);
     rd.on("error", function (err) {
-        logger.error("Error reading file: " + source, err);
+        console.error("Error:\tFailed to read file: " + source);
         defer.reject(err);
     });
 
     var wr = fs.createWriteStream(target);
     wr.on("error", function(err) {
-        logger.error("Error writing file: " + target, err);
+        console.error("Error:\tFailed to write file: " + target);
         defer.reject(err);
     });
     wr.on("close", function(ex) {
@@ -222,8 +216,7 @@ FileManager.prototype.copyFile = function (source, target) {
 };
 
 FileManager.prototype.readSimpleFile = function (filename) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     if (!fs.existsSync(filename)) {
         defer.resolve([]);
@@ -232,7 +225,7 @@ FileManager.prototype.readSimpleFile = function (filename) {
 
     fs.readFile(filename, 'utf-8', function (err, data) {
         if (err) {
-            logger.error("Error reading file: " + filename, err);
+            console.error("Error:\tFailed to read file: " + filename);
             defer.reject(err);
             return;
         }
@@ -256,14 +249,13 @@ FileManager.prototype.readSimpleFile = function (filename) {
 };
 
 FileManager.prototype.writeSimpleFile = function (filename, key, value) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     this.checkFile(filename)
         .then(function () {
             fs.readFile(filename, 'utf-8', function (err, data) {
                 if (err) {
-                    logger.error("Error reading file: " + filename, err);
+                    console.error("Error:\tFailed to read file: " + filename);
                     defer.reject(err);
                     return;
                 }
@@ -290,7 +282,7 @@ FileManager.prototype.writeSimpleFile = function (filename, key, value) {
 
                 fs.writeFile(filename, result, 'utf-8', function (err) {
                     if (err) {
-                        logger.error("Error writing file: " + filename, err);
+                        console.error("Error:\tFailed to write file: " + filename);
                         defer.reject(err);
                         return;
                     }
@@ -305,7 +297,6 @@ FileManager.prototype.writeSimpleFile = function (filename, key, value) {
 
 FileManager.prototype.readPasswordFiles = function (dirname) {
     var me = this,
-        logger = this.sl.get('logger'),
         defer = q.defer();
 
     q.all([
@@ -322,7 +313,7 @@ FileManager.prototype.readPasswordFiles = function (dirname) {
                 }
             }
             if (!found)
-                logger.error("Error:\tUser " + files[0][i][0] + " exists in 'master.passwd' only");
+                console.error("Error:\tUser " + files[0][i][0] + " exists in 'master.passwd' only");
 
             result[i] = [ files[0][i][0], "" ];
 
@@ -349,7 +340,7 @@ FileManager.prototype.readPasswordFiles = function (dirname) {
                 }
             }
             if (!found)
-                logger.error("Error:\tUser " + files[1][i][0] + " exists in 'passwd' only");
+                console.error("Error:\tUser " + files[1][i][0] + " exists in 'passwd' only");
         }
 
         q.all(tasks)
@@ -368,7 +359,6 @@ FileManager.prototype.readPasswordFiles = function (dirname) {
 
 FileManager.prototype.writePasswordFiles = function (dirname, account, password) {
     var me = this,
-        logger = this.sl.get('logger'),
         config = this.sl.get('config'),
         defer = q.defer();
 
@@ -376,7 +366,7 @@ FileManager.prototype.writePasswordFiles = function (dirname, account, password)
     if (password) {
         bcrypt.genSalt(10, function (err, salt) {
             if (err) {
-                logger.error('bcrypt genSalt', err);
+                console.error('Error:\tFailed to generate salt');
                 passwordDefer.reject();
                 defer.reject(err);
                 return;
@@ -384,7 +374,7 @@ FileManager.prototype.writePasswordFiles = function (dirname, account, password)
 
             bcrypt.hash(password, salt, function (err, hash) {
                 if (err) {
-                    logger.error('bcrypt hash', err);
+                    console.error('Error:\tFailed to calculate hash');
                     passwordDefer.reject();
                     defer.reject(err);
                     return;
@@ -397,7 +387,7 @@ FileManager.prototype.writePasswordFiles = function (dirname, account, password)
         me.lookup(dirname + '/master.passwd', account)
             .then(function (prev) {
                 if (prev.trim().length == 0) {
-                    logger.error("Error:\tPassword switch (-p) must be set for new accounts");
+                    console.error("Error:\tPassword switch (-p) must be set for new accounts");
                     passwordDefer.reject();
                     defer.reject();
                     return;
@@ -406,8 +396,8 @@ FileManager.prototype.writePasswordFiles = function (dirname, account, password)
                 passwordDefer.resolve(parts[0]);
             })
             .catch(function (err) {
-                passwordDefer.reject();
-                defer.reject();
+                passwordDefer.reject(err);
+                defer.reject(err);
             });
     }
 
@@ -451,7 +441,6 @@ FileManager.prototype.writePasswordFiles = function (dirname, account, password)
 
 FileManager.prototype.rmDir = function (dirname) {
     var me = this,
-        logger = this.sl.get('logger'),
         defer = q.defer();
 
     if (!fs.existsSync(dirname)) {
@@ -473,7 +462,7 @@ FileManager.prototype.rmDir = function (dirname) {
                 tasks.push(task.promise);
                 fs.unlink(thisFile, function (err) {
                     if (err) {
-                        logger.error("Error deleting file: " + thisFile, err);
+                        console.error("Error:\tFailed to delete file: " + thisFile);
                         task.reject(err);
                         return;
                     }
@@ -486,7 +475,7 @@ FileManager.prototype.rmDir = function (dirname) {
                 .then(function () {
                     fs.rmdir(dirname, function (err) {
                         if (err) {
-                            logger.error("Error deleting directory: " + dirname, err);
+                            console.error("Error:\tFailed to delete directory: " + dirname);
                             defer.reject(err);
                             return;
                         }
@@ -506,14 +495,13 @@ FileManager.prototype.rmDir = function (dirname) {
 };
 
 FileManager.prototype.rmKey = function (filename, key) {
-    var logger = this.sl.get('logger'),
-        defer = q.defer();
+    var defer = q.defer();
 
     this.checkFile(filename)
         .then(function () {
             fs.readFile(filename, 'utf-8', function (err, data) {
                 if (err) {
-                    logger.error("Error reading file: " + filename, err);
+                    console.error("Error:\tFailed to read file: " + filename);
                     defer.reject(err);
                     return;
                 }
@@ -535,7 +523,7 @@ FileManager.prototype.rmKey = function (filename, key) {
 
                 fs.writeFile(filename, result, 'utf-8', function (err) {
                     if (err) {
-                        logger.error("Error writing file: " + filename, err);
+                        console.error("Error:\tFailed to write file: " + filename);
                         defer.reject(err);
                         return;
                     }

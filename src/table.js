@@ -14,9 +14,7 @@ Table.prototype.print = function (header, rows) {
     if (header.length == 0)
         return;
 
-    var rl = this.sl.get('console').getReadline();
-
-    var widths = [];
+    var widths = [], line = "";
     for (var i = 0; i < header.length; i++) {
         var columnWidth = header[i].length;
         rows.forEach(function (el) {
@@ -25,22 +23,25 @@ Table.prototype.print = function (header, rows) {
         });
         widths.push(columnWidth);
 
-        rl.write(sprintf('%-' + (columnWidth + 2) + 's', " " + header[i]));
-        rl.write(i == header.length - 1 ? "\n" : "|");
+        line += sprintf('%-' + (columnWidth + 2) + 's', " " + header[i]);
+        line += (i == header.length - 1 ? "" : "|");
     }
+    console.log(line);
 
+    line = "";
     for (var i = 0; i < header.length; i++) {
         for (var j = 0; j < widths[i] + 2; j++)
-            rl.write('-');
-        rl.write(i == header.length - 1 ? "\n" : "+");
+            line += '-';
+        line += (i == header.length - 1 ? "" : "+");
     }
+    console.log(line);
 
     for (var i = 0; i < rows.length; i++) {
+        line = "";
         for (var j = 0; j < rows[i].length; j++) {
-            rl.write(sprintf('%-' + (widths[j] + 2) + 's', " " + rows[i][j]));
-            rl.write(j == rows[i].length - 1 ? "\n" : "|");
+            line += sprintf('%-' + (widths[j] + 2) + 's', " " + rows[i][j]);
+            line += (j == rows[i].length - 1 ? "" : "|");
         }
+        console.log(line);
     }
-
-    rl.close();
 };

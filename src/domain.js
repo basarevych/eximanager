@@ -88,6 +88,9 @@ Domain.prototype.set = function (name, mx) {
 
     var dir = config['config_dir'] + '/' + name;
     fm.checkDir(dir)
+        .then(function () { return fm.checkFile(config['config_dir'] + '/exim.domain2mx'); })
+        .then(function () { return fm.checkFile(config['config_dir'] + '/exim.ip2mx'); })
+        .then(function () { return fm.checkFile(config['config_dir'] + '/exim.filter'); })
         .then(function () { return fm.checkFile(dir + '/master.passwd'); })
         .then(function () { return fm.checkFile(dir + '/passwd'); })
         .then(function () { return fm.checkFile(dir + '/aliases'); })
@@ -101,19 +104,16 @@ Domain.prototype.set = function (name, mx) {
 
 Domain.prototype.del = function (name) {
     var config = this.sl.get('config'),
-        fm = this.sl.get('file-manager'),
-        rl = this.sl.get('console').getReadline();
+        fm = this.sl.get('file-manager');
 
     fm.rmKey(config['config_dir'] + '/exim.domain2mx', name)
         .then(function () {
             var dirname = config['config_dir'] + '/' + name;
             if (!fs.existsSync(dirname)) {
-                rl.write("Error:\tDomain " + name + " does not exist\n");
-                rl.close();
+                console.error("Error:\tDomain " + name + " does not exist");
                 return;
             }
 
             fm.rmDir(dirname);
-            rl.close();
         });
 };
