@@ -10,6 +10,7 @@ var argv            = require('minimist')(process.argv.slice(2)),
     Init            = require('../src/init.js'),
     Domain          = require('../src/domain.js'),
     Alias           = require('../src/alias.js'),
+    Quota           = require('../src/quota.js'),
     Ip              = require('../src/ip.js');
 
 var sl = new ServiceLocator(),
@@ -19,6 +20,7 @@ var sl = new ServiceLocator(),
     init = new Init(sl),
     domain = new Domain(sl),
     alias = new Alias(sl),
+    quota = new Quota(sl),
     ip = new Ip(sl);
 
 if (argv['_'].length == 0)
@@ -83,6 +85,27 @@ switch (argv['_'][0]) {
             showUsage('alias-del');
         else
             alias.del(argv['_'][1], argv['_'][2]);
+        break;
+
+    case 'quota-get':
+        if (argv['_'].length <= 1)
+            showUsage('quota-get');
+        else
+            quota.get(argv['_'][1], argv['_'].length > 2 ? argv['_'][2] : null);
+        break;
+
+    case 'quota-set':
+        if (argv['_'].length <= 3)
+            showUsage('quota-set');
+        else
+            quota.set(argv['_'][1], argv['_'][2], argv['_'][3]);
+        break;
+
+    case 'quota-del':
+        if (argv['_'].length <= 2)
+            showUsage('quota-del');
+        else
+            quota.del(argv['_'][1], argv['_'][2]);
         break;
 
     case 'ip-get':
@@ -175,6 +198,28 @@ function showUsage(command) {
             rl.write("\tWill delete \"info@example.com\" alias.\n");
             break;
 
+        case 'quota-get':
+            rl.write("Usage:\teximanager quota-get <domain-name> [<regexp-filter>]\n\n");
+            rl.write("\tPrint configured virtual mail quota\n\n");
+            rl.write("\teximanager quota-get example.com '^john'\n");
+            rl.write("\tWill print quota settings for accounts starting with \"john\"\n");
+            rl.write("\tfor domain \"example.com\"\n");
+            break;
+
+        case 'quota-set':
+            rl.write("Usage:\teximanager quota-set <domain-name> <account-name> <quota>\n\n");
+            rl.write("\tCreate/modify quota limit for an account\n\n");
+            rl.write("\teximanager quota-set example.com john.doe 1G\n");
+            rl.write("\tSet quota limit to 1 gigabyte for \"john.doe@example.com\"\n");
+            break;
+
+        case 'quota-del':
+            rl.write("Usage:\teximanager quota-del <domain-name> <account-name>\n\n");
+            rl.write("\tRemove quota limit for an account \n\n");
+            rl.write("\teximanager quota-del example.com john.doe\n");
+            rl.write("\tWill delete quota limit for \"john.doe@example.com\".\n");
+            break;
+
         case 'ip-get':
             rl.write("Usage:\teximanager ip-get [<regexp-filter>]\n\n");
             rl.write("\tPrint configured IP addresses list\n\n");
@@ -200,13 +245,16 @@ function showUsage(command) {
             rl.write("Usage:\t\teximanager <command> [options]\n");
             rl.write("\nCommands:");
             rl.write("\thelp\t\tPrint help screen\n");
-            rl.write("\t\tinit\t\tInitialize Eximanager\n");
+            rl.write("\t\tinit\t\tInitialize Eximanager\n\n");
             rl.write("\t\tdomain-get\tFiltered list of virtual domains\n");
             rl.write("\t\tdomain-set\tCreate or modify a virtual domain\n");
-            rl.write("\t\tdomain-del\tDelete a virtual domain\n");
+            rl.write("\t\tdomain-del\tDelete a virtual domain\n\n");
             rl.write("\t\talias-get\tFiltered list of virtual mail aliases\n");
             rl.write("\t\talias-set\tCreate or modify a virtual mail alias\n");
-            rl.write("\t\talias-del\tDelete a virtual mail alias\n");
+            rl.write("\t\talias-del\tDelete a virtual mail alias\n\n");
+            rl.write("\t\tquota-get\tFiltered list of quota limits\n");
+            rl.write("\t\tquota-set\tCreate or modify a quota limit\n");
+            rl.write("\t\tquota-del\tRemove a quota limit\n\n");
             rl.write("\t\tip-get\t\tFiltered list of IP addresses\n");
             rl.write("\t\tip-set\t\tCreate or modify an IP address\n");
             rl.write("\t\tip-del\t\tDelete an IP address\n");
