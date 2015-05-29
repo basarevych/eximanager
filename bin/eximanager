@@ -9,6 +9,7 @@ var argv            = require('minimist')(process.argv.slice(2)),
     Table           = require('../src/table.js'),
     Init            = require('../src/init.js'),
     Domain          = require('../src/domain.js'),
+    Alias           = require('../src/alias.js'),
     Ip              = require('../src/ip.js');
 
 var sl = new ServiceLocator(),
@@ -17,6 +18,7 @@ var sl = new ServiceLocator(),
     table = new Table(sl),
     init = new Init(sl),
     domain = new Domain(sl),
+    alias = new Alias(sl),
     ip = new Ip(sl);
 
 if (argv['_'].length == 0)
@@ -60,6 +62,27 @@ switch (argv['_'][0]) {
             showUsage('domain-del');
         else
             domain.del(argv['_'][1]);
+        break;
+
+    case 'alias-get':
+        if (argv['_'].length <= 1)
+            showUsage('alias-get');
+        else
+            alias.get(argv['_'][1], argv['_'].length > 2 ? argv['_'][2] : null);
+        break;
+
+    case 'alias-set':
+        if (argv['_'].length <= 3)
+            showUsage('alias-set');
+        else
+            alias.set(argv['_'][1], argv['_'][2], argv['_'][3]);
+        break;
+
+    case 'alias-del':
+        if (argv['_'].length <= 2)
+            showUsage('alias-del');
+        else
+            alias.del(argv['_'][1], argv['_'][2]);
         break;
 
     case 'ip-get':
@@ -128,6 +151,30 @@ function showUsage(command) {
             rl.write("\t      You will need to delete it by hand.\n");
             break;
 
+        case 'alias-get':
+            rl.write("Usage:\teximanager alias-get <domain-name> [<regexp-filter>]\n\n");
+            rl.write("\tPrint configured virtual mail account aliases\n\n");
+            rl.write("\teximanager alias-get example.com '^john'\n");
+            rl.write("\tWill print all the virtual mail aliases starting with \"john\"\n");
+            rl.write("\tfor domain \"example.com\"\n");
+            break;
+
+        case 'alias-set':
+            rl.write("Usage:\teximanager alias-set <domain-name> <alias-name> <target-name>\n\n");
+            rl.write("\tCreate/modify an email alias\n\n");
+            rl.write("\teximanager alias-set example.com info john.doe\n");
+            rl.write("\tAll the mail to info@example.com will be forwarded to john.doe@example.com\n\n");
+            rl.write("\teximanager alias-set example.com info john.doe@domain.com\n");
+            rl.write("\tAll the mail to info@example.com will be forwarded to john.doe@domain.com\n");
+            break;
+
+        case 'alias-del':
+            rl.write("Usage:\teximanager alias-del <domain-name> <alias-name>\n\n");
+            rl.write("\tDelete a virtual mail alias\n\n");
+            rl.write("\teximanager alias-del example.com info\n");
+            rl.write("\tWill delete \"info@example.com\" alias.\n");
+            break;
+
         case 'ip-get':
             rl.write("Usage:\teximanager ip-get [<regexp-filter>]\n\n");
             rl.write("\tPrint configured IP addresses list\n\n");
@@ -157,6 +204,9 @@ function showUsage(command) {
             rl.write("\t\tdomain-get\tFiltered list of virtual domains\n");
             rl.write("\t\tdomain-set\tCreate or modify a virtual domain\n");
             rl.write("\t\tdomain-del\tDelete a virtual domain\n");
+            rl.write("\t\talias-get\tFiltered list of virtual mail aliases\n");
+            rl.write("\t\talias-set\tCreate or modify a virtual mail alias\n");
+            rl.write("\t\talias-del\tDelete a virtual mail alias\n");
             rl.write("\t\tip-get\t\tFiltered list of IP addresses\n");
             rl.write("\t\tip-set\t\tCreate or modify an IP address\n");
             rl.write("\t\tip-del\t\tDelete an IP address\n");
