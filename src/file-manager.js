@@ -4,7 +4,8 @@ var fs      = require('fs'),
     q       = require('q'),
     path    = require('path'),
     mkdirp  = require('mkdirp'),
-    userid  = require('userid');
+    userid  = require('userid'),
+    bcrypt  = require('bcrypt');
 
 function FileManager(serviceLocator) {
     this.sl = serviceLocator;
@@ -281,11 +282,11 @@ FileManager.prototype.writeSimpleFile = function (filename, key, value) {
                         thisValue = value;
                     }
 
-                    result += thisKey + ': ' + thisValue + "\n";
+                    result += thisKey + ':' + thisValue + "\n";
                 }
 
                 if (!found)
-                    result += key + ': ' + value + "\n";
+                    result += key + ':' + value + "\n";
 
                 fs.writeFile(filename, result, 'utf-8', function (err) {
                     if (err) {
@@ -297,6 +298,152 @@ FileManager.prototype.writeSimpleFile = function (filename, key, value) {
                     defer.resolve();
                 });
             });
+        });
+
+    return defer.promise;
+};
+
+FileManager.prototype.readPasswordFiles = function (dirname) {
+    var me = this,
+        logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    q.all([
+        this.readSimpleFile(dirname + '/master.passwd'),
+        this.readSimpleFile(dirname + '/passwd'),
+    ]).then(function (files) {
+        var result = new Array(files[0].length), tasks = [];
+        for (var i = 0; i < files[0].length; i++) {
+            var found = false;
+            for (var j = 0; j < files[1].length; j++) {
+                if (files[0][i][0] == files[1][j][0]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                logger.error("Error:\tUser " + files[0][i][0] + " exists in 'master.passwd' only");
+
+            result[i] = [ files[0][i][0], "" ];
+
+            (function (index) {
+                var task = q.defer();
+                tasks.push(task.promise);
+                me.lookup(dirname + '/quota', files[0][index][0])
+                    .then(function (value) {
+                        result[index][1] = value;
+                        task.resolve();
+                    })
+                    .catch(function (err) {
+                        task.reject(err);
+                    });
+            })(i);
+        }
+
+        for (var i = 0; i < files[1].length; i++) {
+            var found = false;
+            for (var j = 0; j < files[0].length; j++) {
+                if (files[0][i][0] == files[1][j][0]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                logger.error("Error:\tUser " + files[1][i][0] + " exists in 'passwd' only");
+        }
+
+        q.all(tasks)
+            .then(function () {
+                defer.resolve(result);
+            })
+            .catch(function (err) {
+                defer.reject(err);
+            });
+    }).catch(function (err) {
+        defer.reject(err);
+    });
+
+    return defer.promise;
+};
+
+FileManager.prototype.writePasswordFiles = function (dirname, account, password) {
+    var me = this,
+        logger = this.sl.get('logger'),
+        config = this.sl.get('config'),
+        defer = q.defer();
+
+    var passwordDefer = q.defer();
+    if (password) {
+        bcrypt.genSalt(10, function (err, salt) {
+            if (err) {
+                logger.error('bcrypt genSalt', err);
+                passwordDefer.reject();
+                defer.reject(err);
+                return;
+            }
+
+            bcrypt.hash(password, salt, function (err, hash) {
+                if (err) {
+                    logger.error('bcrypt hash', err);
+                    passwordDefer.reject();
+                    defer.reject(err);
+                    return;
+                }
+
+                passwordDefer.resolve(hash);
+            });
+        });
+    } else {
+        me.lookup(dirname + '/master.passwd', account)
+            .then(function (prev) {
+                if (prev.trim().length == 0) {
+                    logger.error("Error:\tPassword switch (-p) must be set for new accounts");
+                    passwordDefer.reject();
+                    defer.reject();
+                    return;
+                }
+                var parts = prev.split(':');
+                passwordDefer.resolve(parts[0]);
+            })
+            .catch(function (err) {
+                passwordDefer.reject();
+                defer.reject();
+            });
+    }
+
+    passwordDefer.promise
+        .then(function (password) {
+            var master = [
+                password,
+                userid.uid(config['user']),
+                userid.gid(config['group']),
+                "",
+                "0",
+                "0",
+                "User &",
+                config['data_dir'] + '/' + path.basename(dirname) + '/' + account,
+                "/sbin/nologin"
+            ];
+            var passwd = [
+                "*",
+                userid.uid(config['user']),
+                userid.gid(config['group']),
+                "User &",
+                config['data_dir'] + '/' + path.basename(dirname) + '/' + account,
+                "/sbin/nologin"
+            ];
+
+            q.all([
+                me.writeSimpleFile(dirname + '/master.passwd', account, master.join(':')),
+                me.writeSimpleFile(dirname + '/passwd', account, passwd.join(':')),
+            ]).then(function () {
+                defer.resolve();
+            }).catch(function (err) {
+                defer.reject(err);
+            });
+        })
+        .catch(function (err) {
+            defer.reject(err);
         });
 
     return defer.promise;

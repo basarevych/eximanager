@@ -9,8 +9,8 @@ var argv            = require('minimist')(process.argv.slice(2)),
     Table           = require('../src/table.js'),
     Init            = require('../src/init.js'),
     Domain          = require('../src/domain.js'),
+    User            = require('../src/user.js'),
     Alias           = require('../src/alias.js'),
-    Quota           = require('../src/quota.js'),
     Ip              = require('../src/ip.js');
 
 var sl = new ServiceLocator(),
@@ -19,8 +19,8 @@ var sl = new ServiceLocator(),
     table = new Table(sl),
     init = new Init(sl),
     domain = new Domain(sl),
+    user = new User(sl),
     alias = new Alias(sl),
-    quota = new Quota(sl),
     ip = new Ip(sl);
 
 if (argv['_'].length == 0)
@@ -66,6 +66,29 @@ switch (argv['_'][0]) {
             domain.del(argv['_'][1]);
         break;
 
+    case 'user-get':
+        if (argv['_'].length <= 1)
+            showUsage('user-get');
+        else
+            user.get(argv['_'][1], argv['_'].length > 2 ? argv['_'][2] : null);
+        break;
+
+    case 'user-set':
+        var password = argv['p'] ? argv['p'] : argv['set-password'],
+            quota = argv['q'] ? argv['q'] : argv['quota'];
+        if (argv['_'].length <= 2 || quota === true)
+            showUsage('user-set');
+        else
+            user.set(argv['_'][1], argv['_'][2], password, quota);
+        break;
+
+    case 'user-del':
+        if (argv['_'].length <= 2)
+            showUsage('user-del');
+        else
+            user.del(argv['_'][1], argv['_'][2]);
+        break;
+
     case 'alias-get':
         if (argv['_'].length <= 1)
             showUsage('alias-get');
@@ -85,27 +108,6 @@ switch (argv['_'][0]) {
             showUsage('alias-del');
         else
             alias.del(argv['_'][1], argv['_'][2]);
-        break;
-
-    case 'quota-get':
-        if (argv['_'].length <= 1)
-            showUsage('quota-get');
-        else
-            quota.get(argv['_'][1], argv['_'].length > 2 ? argv['_'][2] : null);
-        break;
-
-    case 'quota-set':
-        if (argv['_'].length <= 3)
-            showUsage('quota-set');
-        else
-            quota.set(argv['_'][1], argv['_'][2], argv['_'][3]);
-        break;
-
-    case 'quota-del':
-        if (argv['_'].length <= 2)
-            showUsage('quota-del');
-        else
-            quota.del(argv['_'][1], argv['_'][2]);
         break;
 
     case 'ip-get':
@@ -174,6 +176,29 @@ function showUsage(command) {
             rl.write("\t      You will need to delete it by hand.\n");
             break;
 
+        case 'user-get':
+            rl.write("Usage:\teximanager user-get <domain-name> [<regexp-filter>]\n\n");
+            rl.write("\tPrint domain's virtual mail accounts\n\n");
+            rl.write("\teximanager user-get example.com '^john'\n");
+            rl.write("\tWill print all the virtual mail accounts starting with \"john\"\n");
+            rl.write("\tfor domain \"example.com\"\n");
+            break;
+
+        case 'user-set':
+            rl.write("Usage:\teximanager user-set <domain-name> <account-name> [-p|--set-password] [-q|--quota <quota>]\n\n");
+            rl.write("\tCreate/modify a virtual mail account. Setting quota to 'none' will remove the limit.\n\n");
+            rl.write("\teximanager user-set example.com john.doe -p -q 2G\n");
+            rl.write("\tWill create account \"john.doe@example.com\" (if it does not exist)\n");
+            rl.write("\twith quota set to 2 gigabytes and prompt for new user password\n");
+            break;
+
+        case 'user-del':
+            rl.write("Usage:\teximanager user-del <domain-name> <account-name>\n\n");
+            rl.write("\tDelete a virtual mail account\n\n");
+            rl.write("\teximanager user-del example.com john.doe\n");
+            rl.write("\tWill delete \"john.doe@example.com\" account.\n");
+            break;
+
         case 'alias-get':
             rl.write("Usage:\teximanager alias-get <domain-name> [<regexp-filter>]\n\n");
             rl.write("\tPrint configured virtual mail account aliases\n\n");
@@ -196,28 +221,6 @@ function showUsage(command) {
             rl.write("\tDelete a virtual mail alias\n\n");
             rl.write("\teximanager alias-del example.com info\n");
             rl.write("\tWill delete \"info@example.com\" alias.\n");
-            break;
-
-        case 'quota-get':
-            rl.write("Usage:\teximanager quota-get <domain-name> [<regexp-filter>]\n\n");
-            rl.write("\tPrint configured virtual mail quota\n\n");
-            rl.write("\teximanager quota-get example.com '^john'\n");
-            rl.write("\tWill print quota settings for accounts starting with \"john\"\n");
-            rl.write("\tfor domain \"example.com\"\n");
-            break;
-
-        case 'quota-set':
-            rl.write("Usage:\teximanager quota-set <domain-name> <account-name> <quota>\n\n");
-            rl.write("\tCreate/modify quota limit for an account\n\n");
-            rl.write("\teximanager quota-set example.com john.doe 1G\n");
-            rl.write("\tSet quota limit to 1 gigabyte for \"john.doe@example.com\"\n");
-            break;
-
-        case 'quota-del':
-            rl.write("Usage:\teximanager quota-del <domain-name> <account-name>\n\n");
-            rl.write("\tRemove quota limit for an account \n\n");
-            rl.write("\teximanager quota-del example.com john.doe\n");
-            rl.write("\tWill delete quota limit for \"john.doe@example.com\".\n");
             break;
 
         case 'ip-get':
@@ -249,12 +252,12 @@ function showUsage(command) {
             rl.write("\t\tdomain-get\tFiltered list of virtual domains\n");
             rl.write("\t\tdomain-set\tCreate or modify a virtual domain\n");
             rl.write("\t\tdomain-del\tDelete a virtual domain\n\n");
+            rl.write("\t\tuser-get\tFiltered list of virtual accounts\n");
+            rl.write("\t\tuser-set\tCreate or modify a virtual account\n");
+            rl.write("\t\tuser-del\tDelete a virtual account\n\n");
             rl.write("\t\talias-get\tFiltered list of virtual mail aliases\n");
             rl.write("\t\talias-set\tCreate or modify a virtual mail alias\n");
             rl.write("\t\talias-del\tDelete a virtual mail alias\n\n");
-            rl.write("\t\tquota-get\tFiltered list of quota limits\n");
-            rl.write("\t\tquota-set\tCreate or modify a quota limit\n");
-            rl.write("\t\tquota-del\tRemove a quota limit\n\n");
             rl.write("\t\tip-get\t\tFiltered list of IP addresses\n");
             rl.write("\t\tip-set\t\tCreate or modify an IP address\n");
             rl.write("\t\tip-del\t\tDelete an IP address\n");

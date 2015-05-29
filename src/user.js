@@ -3,15 +3,15 @@
 var fs  = require('fs'),
     q   = require('q');
 
-function Quota(serviceLocator) {
+function User(serviceLocator) {
     this.sl = serviceLocator;
 
-    this.sl.set('quota', this);
+    this.sl.set('user', this);
 };
 
-module.exports = Quota;
+module.exports = User;
 
-Quota.prototype.get = function (domain, filter) {
+User.prototype.get = function (domain, filter) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
         table = this.sl.get('table'),
@@ -27,7 +27,7 @@ Quota.prototype.get = function (domain, filter) {
     if (filter)
         filter = new RegExp(filter);
 
-    fm.readSimpleFile(dirname + '/quota')
+    fm.readPasswordFiles(dirname)
         .then(function (rows) {
             var filtered;
             if (filter)
@@ -40,7 +40,7 @@ Quota.prototype.get = function (domain, filter) {
         });
 };
 
-Quota.prototype.set = function (domain, account, quota) {
+User.prototype.set = function (domain, account, setPassword, setQuota) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
         rl = this.sl.get('console').getReadline();
@@ -52,11 +52,31 @@ Quota.prototype.set = function (domain, account, quota) {
         return;
     }
 
-    fm.writeSimpleFile(dirname + '/quota', account, quota);
-    rl.close();
+    var passwordDefer = q.defer();
+    if (setPassword) {
+        rl.question("New password: ", function (password) {
+            rl.close();
+            passwordDefer.resolve(password);
+        });
+    } else {
+        rl.close();
+        passwordDefer.resolve(null);
+    }
+
+    passwordDefer.promise
+        .then(function (password) {
+            return fm.writePasswordFiles(dirname, account, password);
+        })
+        .then(function () {
+            if (setQuota == 'none') {
+                fm.rmKey(dirname + '/quota', account);
+            } else if (setQuota.toString().length) {
+                fm.writeSimpleFile(dirname + '/quota', account, setQuota);
+            }
+        });
 };
 
-Quota.prototype.del = function (domain, account) {
+User.prototype.del = function (domain, account) {
     var config = this.sl.get('config'),
         fm = this.sl.get('file-manager'),
         rl = this.sl.get('console').getReadline();
@@ -68,16 +88,19 @@ Quota.prototype.del = function (domain, account) {
         return;
     }
 
-    var filename = dirname + '/quota';
-    fm.lookup(filename, account)
-        .then(function (value) {
-            if (value.length == 0) {
-                rl.write("Error:\tQuota for " + account + " at " + domain + " is not set\n");
-                rl.close();
-                return;
-            }
-
-            fm.rmKey(filename, account);
+    q.all([
+        fm.lookup(dirname + '/master.passwd', account),
+        fm.lookup(dirname + '/passwd', account)
+    ]).then(function (result) {
+        if (result[0].length == 0 && result[1].length == 0) {
+            rl.write("Error:\tUser " + account + " at " + domain + " does not exist\n");
             rl.close();
-        });
+            return;
+        }
+
+        fm.rmKey(dirname + '/master.passwd', account);
+        fm.rmKey(dirname + '/passwd', account);
+        fm.rmKey(dirname + '/quota', account);
+        rl.close();
+    });
 };
