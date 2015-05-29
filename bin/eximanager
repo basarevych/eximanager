@@ -8,14 +8,16 @@ var argv            = require('minimist')(process.argv.slice(2)),
     FileManager     = require('../src/file-manager.js'),
     Table           = require('../src/table.js'),
     Init            = require('../src/init.js'),
-    Domain          = require('../src/domain.js');
+    Domain          = require('../src/domain.js'),
+    Ip              = require('../src/ip.js');
 
 var sl = new ServiceLocator(),
     cons = new Console(sl),
     manager = new FileManager(sl),
     table = new Table(sl),
     init = new Init(sl),
-    domain = new Domain(sl);
+    domain = new Domain(sl),
+    ip = new Ip(sl);
 
 if (argv['_'].length == 0)
     showUsage();
@@ -58,6 +60,24 @@ switch (argv['_'][0]) {
             showUsage('domain-del');
         else
             domain.del(argv['_'][1]);
+        break;
+
+    case 'ip-get':
+        ip.get(argv['_'].length > 1 ? argv['_'][1] : null);
+        break;
+
+    case 'ip-set':
+        if (argv['_'].length <= 2)
+            showUsage('ip-set');
+        else
+            ip.set(argv['_'][1], argv['_'][2]);
+        break;
+
+    case 'ip-del':
+        if (argv['_'].length <= 1)
+            showUsage('ip-del');
+        else
+            ip.del(argv['_'][1]);
         break;
 
     default:
@@ -108,14 +128,38 @@ function showUsage(command) {
             rl.write("\t      You will need to delete it by hand.\n");
             break;
 
+        case 'ip-get':
+            rl.write("Usage:\teximanager ip-get [<regexp-filter>]\n\n");
+            rl.write("\tPrint configured IP addresses list\n\n");
+            rl.write("\teximanager ip-get '^1\\.'\n");
+            rl.write("\tWill print all the IP addresses starting with \"1.\"\n");
+            break;
+
+        case 'ip-set':
+            rl.write("Usage:\teximanager ip-set <ip-address> <domain-name>\n\n");
+            rl.write("\tCreate/modify IP address\n\n");
+            rl.write("\teximanager ip-set 1.2.3.4 mx.example.com\n");
+            rl.write("\tWill assign name \"mx.example.com\" to IP address \"1.2.3.4\"\n");
+            break;
+
+        case 'ip-del':
+            rl.write("Usage:\teximanager ip-del <ip-address>\n\n");
+            rl.write("\tDelete an IP address\n\n");
+            rl.write("\teximanager ip-del 1.2.3.4\n");
+            rl.write("\tWill delete the IP address \"1.2.3.4\".\n");
+            break;
+
         default:
             rl.write("Usage:\t\teximanager <command> [options]\n");
             rl.write("\nCommands:");
             rl.write("\thelp\t\tPrint help screen\n");
             rl.write("\t\tinit\t\tInitialize Eximanager\n");
             rl.write("\t\tdomain-get\tFiltered list of virtual domains\n");
-            rl.write("\t\tdomain-set\tCreate or modify virtual domain\n");
-            rl.write("\t\tdomain-del\tDelete virtual domain\n");
+            rl.write("\t\tdomain-set\tCreate or modify a virtual domain\n");
+            rl.write("\t\tdomain-del\tDelete a virtual domain\n");
+            rl.write("\t\tip-get\t\tFiltered list of IP addresses\n");
+            rl.write("\t\tip-set\t\tCreate or modify an IP address\n");
+            rl.write("\t\tip-del\t\tDelete an IP address\n");
             rl.write("\nNote:\t\tRun \"eximanager help <command>\" for help on the command\n");
     }
 

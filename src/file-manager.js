@@ -220,6 +220,40 @@ FileManager.prototype.copyFile = function (source, target) {
     return defer.promise;
 };
 
+FileManager.prototype.readSimpleFile = function (filename) {
+    var logger = this.sl.get('logger'),
+        defer = q.defer();
+
+    if (!fs.existsSync(filename)) {
+        defer.resolve([]);
+        return defer.promise;
+    }
+
+    fs.readFile(filename, 'utf-8', function (err, data) {
+        if (err) {
+            logger.error("Error reading file: " + filename, err);
+            defer.reject(err);
+            return;
+        }
+
+        var result = [];
+        var lines = data.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].trim() == "")
+                continue;
+
+            var fields = lines[i].split(":");
+            for (var i = 0; i < fields.length; i++)
+                fields[i] = fields[i].trim();
+            result.push(fields);
+        }
+
+        defer.resolve(result);
+    });
+
+    return defer.promise;
+};
+
 FileManager.prototype.writeSimpleFile = function (filename, key, value) {
     var logger = this.sl.get('logger'),
         defer = q.defer();
