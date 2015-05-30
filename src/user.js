@@ -63,6 +63,9 @@ User.prototype.set = function (domain, account, setPassword, setQuota) {
             return fm.writePasswordFiles(dirname, account, password);
         })
         .then(function () {
+            return fm.checkFile(config['data_dir'] + '/' + domain + '/' + account + '/filter');
+        })
+        .then(function () {
             if (setQuota == 'none') {
                 fm.rmKey(dirname + '/quota', account);
             } else if (setQuota.toString().length) {

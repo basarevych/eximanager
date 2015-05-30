@@ -139,7 +139,52 @@ describe("FileManager", function () {
             .then(function () {
                 var result = fs.readFileSync(filename, 'utf-8');
                 fs.unlinkSync(filename);
-                expect(result).toBe("line1a: line1b\nline2a: foobar\nline3a: line3b\n");
+                expect(result).toBe("line1a:line1b\nline2a:foobar\nline3a:line3b\n");
+                done();
+            });
+    });
+
+    it("reads password files", function (done) {
+        var dirname = '/tmp/eximanager-test';
+
+        fs.mkdirSync(dirname);
+        fs.writeFileSync(dirname + '/master.passwd', "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        fs.writeFileSync(dirname + '/passwd', "line1a: line1b\nline2a : line2b\nline3a :line3b\n");
+        fs.writeFileSync(dirname + '/quota', "line1a: quota1b\nline2a : quota2b\nline3a :quota3b\n");
+        fm.readPasswordFiles(dirname)
+            .then(function (result) {
+                fs.unlinkSync(dirname + '/master.passwd');
+                fs.unlinkSync(dirname + '/passwd');
+                fs.unlinkSync(dirname + '/quota');
+                fs.rmdirSync(dirname);
+                expect(result).toEqual([ ["line1a", "quota1b"], ["line2a", "quota2b"], ["line3a", "quota3b"] ]);
+                done();
+            });
+    });
+
+    it("writes password files", function (done) {
+        var dirname = '/tmp/eximanager-test';
+
+        fs.mkdirSync(dirname);
+        fs.writeFileSync(dirname + '/master.passwd', "line1a:line1b\nline2a:line2b\nline3a:line3b\n");
+        fs.writeFileSync(dirname + '/passwd', "line1a:line1b\nline2a:line2b\nline3a:line3b\n");
+        fm.writePasswordFiles(dirname, 'line2a', 'foobar')
+            .then(function () {
+                var master = fs.readFileSync(dirname + '/master.passwd', 'utf-8');
+                var passwd = fs.readFileSync(dirname + '/passwd', 'utf-8');
+                fs.unlinkSync(dirname + '/master.passwd');
+                fs.unlinkSync(dirname + '/passwd');
+                fs.rmdirSync(dirname);
+
+                var lines = master.split("\n");
+                expect(lines[0].substring(0, 13)).toBe('line1a:line1b');
+                expect(lines[1].substring(0, 11)).toBe('line2a:$2a$');
+                expect(lines[2].substring(0, 13)).toBe('line3a:line3b');
+
+                var lines = passwd.split("\n");
+                expect(lines[0].substring(0, 13)).toBe('line1a:line1b');
+                expect(lines[1].substring(0, 8)).toBe('line2a:*');
+                expect(lines[2].substring(0, 13)).toBe('line3a:line3b');
                 done();
             });
     });
@@ -167,7 +212,7 @@ describe("FileManager", function () {
             .then(function () {
                 var result = fs.readFileSync(filename, 'utf-8');
                 fs.unlinkSync(filename);
-                expect(result).toBe("line1a: line1b\nline3a: line3b\n");
+                expect(result).toBe("line1a:line1b\nline3a:line3b\n");
                 done();
             });
     });

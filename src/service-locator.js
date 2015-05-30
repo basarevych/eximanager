@@ -1,7 +1,7 @@
 'use strict'
 
-var logger      = require('tracer').console(),
-    fs          = require('fs');
+var fs          = require('fs'),
+    logger      = require('tracer').console();
 
 function ServiceLocator() {
     this.services = [];

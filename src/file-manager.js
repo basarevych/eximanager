@@ -57,7 +57,7 @@ FileManager.prototype.checkDir = function (dirname) {
     return defer.promise;
 };
 
-FileManager.prototype.checkFile = function (filename, mode) {
+FileManager.prototype.checkFile = function (filename) {
     var config = this.sl.get('config'),
         defer = q.defer();
 
@@ -518,7 +518,7 @@ FileManager.prototype.rmKey = function (filename, key) {
                     if (thisKey == key)
                         continue;
 
-                    result += thisKey + ': ' + thisValue + "\n";
+                    result += thisKey + ':' + thisValue + "\n";
                 }
 
                 fs.writeFile(filename, result, 'utf-8', function (err) {

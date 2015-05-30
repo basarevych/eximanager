@@ -3,6 +3,7 @@
 'use strict'
 
 var argv            = require('minimist')(process.argv.slice(2)),
+    userid          = require('userid'),
     ServiceLocator  = require('../src/service-locator.js'),
     Console         = require('../src/console.js'),
     FileManager     = require('../src/file-manager.js'),
@@ -40,6 +41,23 @@ if (argv['_'].length && argv['_'][0] != 'init' && !sl.has('config')) {
     process.exit(3);
 }
 
+if (sl.has('config')) {
+    var config = sl.get('config');
+    try {
+        userid.uid(config['user']);
+    } catch (e) {
+        console.error("Error:\tOption 'user' in configuration file is invalid");
+        process.exit(3);
+    }
+
+    try {
+        userid.gid(config['group']);
+    } catch (e) {
+        console.error("Error:\tOption 'group' in configuration file is invalid");
+        process.exit(3);
+    }
+}
+
 switch (argv['_'][0]) {
     case 'help':
         showUsage(argv['_'].length > 1 ? argv['_'][1] : 'help');
@@ -58,9 +76,10 @@ switch (argv['_'][0]) {
         break;
 
     case 'domain-set':
-        var name = argv['_'].length > 1 ? argv['_'][1] : null,
-            mx = argv['m'] ? argv['m'] : argv['mx'];
-        domain.set(name, mx);
+        if (argv['_'].length <= 1)
+            showUsage('domain-set');
+        else
+            domain.set(argv['_'][1], argv['m'] ? argv['m'] : argv['mx']);
         break;
 
     case 'domain-del':
