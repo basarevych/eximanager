@@ -1,6 +1,6 @@
 {
   "name": "eximanager",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Virtual domains/users manager for Exim",
   "main": "src",
   "scripts": {
@@ -10,7 +10,9 @@
     "eximanager": "bin/eximanager"
   },
   "keywords": [
-    "exim"
+    "exim",
+    "dovecot",
+    "mail"
   ],
   "author": "Ross Basarevych",
   "license": "MIT",
